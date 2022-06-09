@@ -59,8 +59,10 @@ export class MarcadoresComponent implements AfterViewInit {
     //   .addTo(this.mapa);
   }
 
-  navigateToMarker() {
-
+  navigateToMarker({ marker }: MarkerColor) {
+    this.mapa.flyTo({
+      center: marker.getLngLat()
+    });
   }
 
   createMarker() {
@@ -76,6 +78,14 @@ export class MarcadoresComponent implements AfterViewInit {
     });
 
     console.log(this.markers.map(m => (m as any)._color));
+  }
+
+  saveMarkersLocally() {
+
+  }
+
+  readMarkersLocally() {
+    
   }
 
 }
