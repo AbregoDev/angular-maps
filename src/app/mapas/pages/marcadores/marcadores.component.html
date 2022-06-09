@@ -4,13 +4,13 @@
         + Agregar
     </li>
     
-    <li class="list-group-item"
+    <li *ngFor="let marker of markers; let i = index"
+        class="list-group-item"
+        [ngStyle]="{
+            'background-color': marker.color
+        }"
         (click)="navigateToMarker()">
-        Marker 1
-    </li>
-    
-    <li class="list-group-item">
-        Marker 1
+        Marker {{ i + 1 }}
     </li>
 </ul>
 
