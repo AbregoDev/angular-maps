@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as mapboxgl from 'mapbox-gl';
 
 interface MarkerColor {
   color: string;
-  marker: mapboxgl.Marker;
+  marker?: mapboxgl.Marker;
+  center?: [number, number];
 }
 
 @Component({
@@ -23,13 +24,17 @@ interface MarkerColor {
       z-index: 10;
     }
 
-    li {
+    #addBtn {
+      cursor: pointer;
+    }
+
+    li h5 {
       cursor: pointer;
     }
     `
   ]
 })
-export class MarcadoresComponent implements AfterViewInit {
+export class MarcadoresComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('mapa')
   mapDiv!: ElementRef;
@@ -46,6 +51,10 @@ export class MarcadoresComponent implements AfterViewInit {
 
   constructor() { }
 
+  ngOnDestroy(): void {
+    this.saveMarkersLocally();
+  }
+
   ngAfterViewInit(): void {
     this.mapa = new mapboxgl.Map({
       container: this.mapDiv.nativeElement,
@@ -54,6 +63,8 @@ export class MarcadoresComponent implements AfterViewInit {
       zoom: this.zoomLevel,
     });
 
+    this.readMarkersLocally();
+
     // const marker = new mapboxgl.Marker({ color: 'red', rotation: 25 })
     //   .setLngLat(this.center)
     //   .addTo(this.mapa);
@@ -61,7 +72,7 @@ export class MarcadoresComponent implements AfterViewInit {
 
   navigateToMarker({ marker }: MarkerColor) {
     this.mapa.flyTo({
-      center: marker.getLngLat()
+      center: marker!.getLngLat()
     });
   }
 
@@ -76,16 +87,48 @@ export class MarcadoresComponent implements AfterViewInit {
       marker: newMarker,
       color,
     });
-
-    console.log(this.markers.map(m => (m as any)._color));
   }
 
   saveMarkersLocally() {
+    const markersArr: MarkerColor[] = [];
 
+    this.markers.forEach(m => {
+      const color = m.color;
+      const { lng, lat } = m.marker!.getLngLat();
+
+      markersArr.push({
+        color,
+        center: [lng, lat],
+      });
+    });
+
+    localStorage.setItem('markers', JSON.stringify(markersArr));
   }
 
   readMarkersLocally() {
+    const markersString = localStorage.getItem('markers');
     
+    if (markersString) {
+      const markersArr: MarkerColor[] = JSON.parse(markersString);
+      
+      markersArr.forEach(marker => {
+        const newMarker = new mapboxgl.Marker({
+          draggable: true,
+          color: marker.color
+        }).setLngLat(marker.center!)
+          .addTo(this.mapa);
+
+        this.markers.push({
+          color: marker.color,
+          marker: newMarker,
+        });
+      });
+    }
+  }
+
+  deleteMarker(i: number) {
+    this.markers[i].marker!.remove();
+    this.markers.splice(i, 1);
   }
 
 }
